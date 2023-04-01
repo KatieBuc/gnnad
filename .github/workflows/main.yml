@@ -18,6 +18,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8, 3.9, '3.10', '3.11']
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v3
@@ -30,18 +33,17 @@ jobs:
         with:
           version: 1.4.1
           virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/my-custom-path
-          installer-parallel: true
+          virtualenvs-in-project: true
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --no-interaction
       - name: Lint
         run: |
-          poetry run black gnnad --check
-          poetry run isort gnnad --diff
+          source $VENV
+          black gnnad --check
+          isort gnnad --diff
       - name: Test with pytest
         run: |
-          poetry run python -m pytest tests
+          python -m pytest tests
 
   publish:
     needs: test
