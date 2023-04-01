@@ -37,11 +37,11 @@ jobs:
         run: poetry install
       - name: Lint
         run: |
-          black gnnad --check
-          isort gnnad --diff
+          poetry run black gnnad --check
+          poetry run isort gnnad --diff
       - name: Test with pytest
         run: |
-          python -m pytest tests
+          poetry run python -m pytest tests
 
   publish:
     needs: test
