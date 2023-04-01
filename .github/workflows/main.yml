@@ -41,8 +41,9 @@ jobs:
           source $VENV
           black gnnad --check
           isort gnnad --diff
-      - name: Test with pytest
+      - name: Test
         run: |
+          source $VENV
           python -m pytest tests
 
   publish:
