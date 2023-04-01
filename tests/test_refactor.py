@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from graphanomaly import GNNAD
+from gnnad.graphanomaly import GNNAD
 
 random_state = 245
 rng = check_random_state(random_state)
