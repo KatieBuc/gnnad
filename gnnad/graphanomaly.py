@@ -12,12 +12,13 @@ import torch.nn.functional as F
 from scipy.stats import iqr, rankdata
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 from torch.nn import Linear, Parameter
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import add_self_loops, remove_self_loops, softmax
 
 __author__ = ["KatieBuc"]
+
 
 class TimeDataset(Dataset):
     """
@@ -30,18 +31,19 @@ class TimeDataset(Dataset):
         A list of raw data
     config (dict):
         A dictionary containing the configuration of dataset
-    edge_index (np.ndarray): 
+    edge_index (np.ndarray):
         Edge index of the dataset
-    mode (str): 
+    mode (str):
         The mode of dataset, either 'train' or 'test'
-    x (torch.Tensor): 
+    x (torch.Tensor):
         Feature data
-    y (torch.Tensor): 
+    y (torch.Tensor):
         Target data
     labels (torch.Tensor):
         Anomaly labels of the data
     """
-    def __init__(self, raw_data, edge_index, mode='train', config = None):
+
+    def __init__(self, raw_data, edge_index, mode="train", config=None):
         self.raw_data = raw_data
         self.config = config
         self.edge_index = edge_index
@@ -51,18 +53,22 @@ class TimeDataset(Dataset):
         data = torch.tensor(raw_data[:-1]).double()
         labels = torch.tensor(raw_data[-1]).double()
         self.x, self.y, self.labels = self.process(data, labels)
-    
+
     def __len__(self):
         return len(self.x)
 
     def process(self, data, labels):
         x_arr, y_arr, labels_arr = [], [], []
-        slide_win, slide_stride = self.config['slide_win'], self.config['slide_stride']
-        is_train = self.mode == 'train'
+        slide_win, slide_stride = self.config["slide_win"], self.config["slide_stride"]
+        is_train = self.mode == "train"
         total_time_len = data.shape[1]
 
-        for i in range(slide_win, total_time_len, slide_stride) if is_train else range(slide_win, total_time_len):
-            ft = data[:, i-slide_win:i]
+        for i in (
+            range(slide_win, total_time_len, slide_stride)
+            if is_train
+            else range(slide_win, total_time_len)
+        ):
+            ft = data[:, i - slide_win : i]
             tar = data[:, i]
             x_arr.append(ft)
             y_arr.append(tar)
@@ -81,6 +87,7 @@ class TimeDataset(Dataset):
         label = self.labels[idx].double()
 
         return feature, y, label, edge_index
+
 
 class GraphLayer(MessagePassing):
     """
@@ -243,9 +250,7 @@ class GraphLayer(MessagePassing):
         return x_j * alpha
 
     def __repr__(self):
-        return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
-        )
+        return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, heads={self.heads})"
 
 
 class OutLayer(nn.Module):
@@ -272,10 +277,13 @@ class OutLayer(nn.Module):
                 modules.append(nn.Linear(in_num if layer_num == 1 else inter_dim, 1))
             else:
                 layer_in_num = in_num if i == 0 else inter_dim
-                modules.append(nn.Linear(layer_in_num, inter_dim))
-                modules.append(nn.BatchNorm1d(inter_dim))
-                modules.append(nn.ReLU())
-
+                modules.extend(
+                    (
+                        nn.Linear(layer_in_num, inter_dim),
+                        nn.BatchNorm1d(inter_dim),
+                        nn.ReLU(),
+                    )
+                )
         self.mlp = nn.ModuleList(modules)
 
     def forward(self, x):
@@ -305,7 +313,6 @@ class GNNLayer(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x, edge_index, embedding=None):
-
         out = self.gnn(x, edge_index, embedding)
         out = self.bn(out)
         return self.relu(out)
@@ -333,7 +340,6 @@ class GDN(nn.Module):
         self.topk = topk
 
     def _initialise_layers(self):
-
         self.embedding = nn.Embedding(self.n_nodes, self.embed_dim)
         self.bn_outlayer_in = nn.BatchNorm1d(self.embed_dim)
 
@@ -361,7 +367,6 @@ class GDN(nn.Module):
         nn.init.kaiming_uniform_(self.embedding.weight, a=math.sqrt(5))
 
     def forward(self, data):
-
         x = data.clone().detach()
         device = data.device
         batch_size = x.shape[0]
@@ -491,7 +496,6 @@ class GNNAD:
         suppress_print: bool = False,
         smoothen_error: bool = True,
     ):
-
         self.batch = batch
         self.epoch = epoch
         self.slide_win = slide_win
@@ -520,7 +524,6 @@ class GNNAD:
         torch.manual_seed(self.random_seed)
 
     def _split_train_validation(self, data):
-
         dataset_len = len(data)
         validate_use_len = int(dataset_len * self.validate_ratio)
         validate_start_idx = random.randrange(dataset_len - validate_use_len)
@@ -539,7 +542,6 @@ class GNNAD:
         return train_subset, validate_subset
 
     def _load_data(self, X_train, X_test, y_test):
-
         X_train.columns = X_train.columns.astype(str)
         X_test.columns = X_test.columns.astype(str)
 
@@ -624,7 +626,6 @@ class GNNAD:
         self.model = model
 
     def _get_model_path(self):
-
         datestr = datetime.now().strftime("%m%d-%H%M%S")
         model_name = datestr if len(self.save_model_name) == 0 else self.save_model_name
         model_path = f"./pretrained/{self.data_subdir}/{model_name}.pt"
@@ -634,7 +635,6 @@ class GNNAD:
         self.model_path = model_path
 
     def _test(self, model, dataloader):
-
         start = datetime.now()
 
         test_loss_list = []
@@ -684,7 +684,6 @@ class GNNAD:
         )
 
     def _train(self):
-
         optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.lr, weight_decay=self.decay
         )
@@ -694,12 +693,10 @@ class GNNAD:
         stop_improve_count = 0
 
         for i_epoch in range(self.epoch):
-
             acu_loss = 0
             self.model.train()
 
             for i, (x, y, _, edge_index) in enumerate(self.train_dataloader):
-
                 x, y, edge_index = [
                     item.float().to(self.device) for item in [x, y, edge_index]
                 ]
@@ -727,7 +724,6 @@ class GNNAD:
 
             # use val dataset to judge
             if self.validate_dataloader is not None:
-
                 val_loss, _ = self._test(self.model, self.validate_dataloader)
 
                 if val_loss < max_loss:
@@ -741,15 +737,13 @@ class GNNAD:
                 if stop_improve_count >= self.early_stop_win:
                     break
 
-            else:
-                if acu_loss < max_loss:
-                    torch.save(self.model.state_dict(), self.model_path)
-                    max_loss = acu_loss
+            elif acu_loss < max_loss:
+                torch.save(self.model.state_dict(), self.model_path)
+                max_loss = acu_loss
 
         self.train_log = train_log
 
     def _get_score(self):
-
         # read in best model
         self.model.load_state_dict(torch.load(self.model_path))
         best_model = self.model.to(self.device)
@@ -758,10 +752,11 @@ class GNNAD:
         _, self.test_result = self._test(best_model, self.test_dataloader)
         _, self.validate_result = self._test(best_model, self.validate_dataloader)
 
-
         test_labels = self.test_result[2, :, 0]
         test_err_scores = get_full_err_scores(self.test_result, self.smoothen_error)
-        validate_err_scores = get_full_err_scores(self.validate_result, self.smoothen_error)
+        validate_err_scores = get_full_err_scores(
+            self.validate_result, self.smoothen_error
+        )
         topk_err_indices, topk_err_scores = aggregate_error_scores(test_err_scores)
 
         # get threshold value
@@ -844,24 +839,24 @@ def str_time_elapsed(start, i, total):
     elapsed = (now - start).seconds
     frac_complete = (i + 1) / total
     remaining = elapsed / frac_complete - elapsed
-    return "%s (- %s)" % (
-        str_seconds_to_minutes(elapsed),
-        str_seconds_to_minutes(remaining),
-    )
+    return f"{str_seconds_to_minutes(elapsed)} (- {str_seconds_to_minutes(remaining)})"
 
 
-def get_full_err_scores(test_result, smoothen_error = True):
+def get_full_err_scores(test_result, smoothen_error=True):
     """Get stacked array of error scores for each feature by applying the
     `get_err_scores` function on every slice of the `test_result` tensor.
     """
-    all_scores = [get_err_scores(test_result[:2, :, i], smoothen_error) for i in range(test_result.shape[-1])]
+    all_scores = [
+        get_err_scores(test_result[:2, :, i], smoothen_error)
+        for i in range(test_result.shape[-1])
+    ]
     return np.vstack(all_scores)
 
 
 def get_err_scores(test_result_list, smoothen_error):
     """
     Calculate the error scores, normalised by the median and interquartile range.
-    
+
     Parameters
     ----------
     test_result_list (list):
@@ -899,13 +894,11 @@ def get_err_scores(test_result_list, smoothen_error):
 
 
 def get_err_median_and_iqr(predicted, groundtruth):
-
     np_arr = np.abs(np.subtract(np.array(predicted), np.array(groundtruth)))
     return np.median(np_arr), iqr(np_arr)
 
 
 def aggregate_error_scores(test_err_scores, topk=1):
-
     # finds topk feature idx of max scores for each time point
     topk_indices = np.argpartition(test_err_scores, -topk, axis=0)[-topk:]
 
@@ -930,7 +923,6 @@ def eval_scores(scores, true_scores, th_steps=400):
     thresholds = [None] * th_steps
 
     for i in range(th_steps):
-
         cur_pred = scores_rank > th_vals[i] * len(scores)
         fmeas[i] = f1_score(true_scores, cur_pred)
         score_index = scores_rank.tolist().index(int(th_vals[i] * len(scores) + 1))
