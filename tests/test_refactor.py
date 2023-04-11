@@ -35,7 +35,6 @@ y_test = np.zeros(len(X_test))
 y_test[342:356] = 1
 y_test[752:772] = 1
 
-print(X_test)
 
 def test_fitted_model():
     """This model is tested against _[1], with the above generated code.
