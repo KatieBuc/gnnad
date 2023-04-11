@@ -120,7 +120,7 @@ class GraphLayer(MessagePassing):
         dropout=0,
         with_bias=True,
     ):
-        super(GraphLayer, self).__init__(aggr="add")
+        super(GraphLayer, self).__init__(aggr="add", node_dim=0)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -240,8 +240,7 @@ class GraphLayer(MessagePassing):
 
         alpha = alpha.view(-1, self.heads, 1)  # [(topk x N x batch_size), 1, 1]
         alpha = F.leaky_relu(alpha, self.negative_slope)
-        #alpha = softmax(alpha, edge_index_i, None, size_i)  # eqn (8)
-        alpha = softmax(alpha, edge_index_i, size_i)  # eqn (8)
+        alpha = softmax(alpha, edge_index_i, None, size_i)  # eqn (8)
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
 
         # save to self
