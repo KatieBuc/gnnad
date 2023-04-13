@@ -188,12 +188,6 @@ class GraphLayer(MessagePassing):
             edges=edge_index,
         )
 
-        # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
-        out = out.view(-1, self._out_channels)
-
-        if self.bias is not None:
-            out = out + self.bias
-
         return out
 
     def message(self, x_i, x_j, edge_index_i, size_i, embedding, edges):
@@ -248,6 +242,18 @@ class GraphLayer(MessagePassing):
 
         # multiply node feature by alpha
         return x_j * alpha
+
+
+    def update(self, out):
+
+        # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
+        out = out.view(-1, self._out_channels)
+
+        if self.bias is not None:
+            out = out + self.bias
+
+        return out
+    
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, heads={self.heads})"
@@ -523,6 +529,7 @@ class GNNAD:
         np.random.seed(self.random_seed)
         torch.manual_seed(self.random_seed)
 
+
     def _split_train_validation(self, data):
         dataset_len = len(data)
         validate_use_len = int(dataset_len * self.validate_ratio)
@@ -619,6 +626,7 @@ class GNNAD:
             out_layer_num=self.out_layer_num,
             out_layer_inter_dim=self.out_layer_inter_dim,
             topk=self.topk,
+            embed_dim=self.dim,
         ).to(self.device)
 
         model._initialise_layers()
@@ -653,7 +661,9 @@ class GNNAD:
 
             with torch.no_grad():
                 predicted = model(x).float().to(self.device)
+
                 loss = loss_func(predicted, y)
+
                 labels = labels.unsqueeze(1).repeat(1, predicted.shape[1])
 
                 if len(t_test_predicted_list) <= 0:
@@ -700,7 +710,6 @@ class GNNAD:
                 x, y, edge_index = [
                     item.float().to(self.device) for item in [x, y, edge_index]
                 ]
-
                 optimizer.zero_grad()
 
                 out = self.model(x).float().to(self.device)
