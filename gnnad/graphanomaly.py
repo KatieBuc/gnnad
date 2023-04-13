@@ -243,9 +243,7 @@ class GraphLayer(MessagePassing):
         # multiply node feature by alpha
         return x_j * alpha
 
-
     def update(self, out):
-
         # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
         out = out.view(-1, self._out_channels)
 
@@ -253,7 +251,6 @@ class GraphLayer(MessagePassing):
             out = out + self.bias
 
         return out
-    
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, heads={self.heads})"
@@ -528,7 +525,6 @@ class GNNAD:
         random.seed(self.random_seed)
         np.random.seed(self.random_seed)
         torch.manual_seed(self.random_seed)
-
 
     def _split_train_validation(self, data):
         dataset_len = len(data)
