@@ -101,7 +101,6 @@ class GraphLayer(MessagePassing):
     concat_heads (bool): whether to concatenate across heads
     negative_slope (float): slope for LeakyReLU
     dropout (float): dropout rate
-    with_bias (bool): whether to include bias term
     lin (nn.Module): Linear layer for transforming input
     att_i (nn.Parameter): attention parameter related to x_i
     att_j (nn.Parameter): attention parameter related to x_j
@@ -118,7 +117,6 @@ class GraphLayer(MessagePassing):
         concat_heads=True,
         negative_slope=0.2,
         dropout=0,
-        with_bias=True,
     ):
         super(GraphLayer, self).__init__(aggr="add", node_dim=0)
 
@@ -128,7 +126,6 @@ class GraphLayer(MessagePassing):
         self.concat_heads = concat_heads
         self.negative_slope = negative_slope
         self.dropout = dropout
-        self.with_bias = with_bias
 
         # parameters related to weight matrix W
         self.lin = Linear(in_channels, heads * out_channels, bias=False)
@@ -143,10 +140,7 @@ class GraphLayer(MessagePassing):
 
         # if concatenating the across heads, consider the change of out_channels
         self._out_channels = heads * out_channels if concat_heads else out_channels
-        if with_bias:
-            self.bias = Parameter(torch.Tensor(self._out_channels))
-        else:
-            self.register_parameter("bias", None)
+        self.bias = Parameter(torch.Tensor(self._out_channels))
 
         self.reset_parameters()
 
@@ -157,7 +151,7 @@ class GraphLayer(MessagePassing):
         glorot(self.att_j)
         zeros(self.att_em_i)
         zeros(self.att_em_j)
-        zeros(self.bias)
+        self.bias.data.zero_()
 
     def forward(self, x, edge_index, embedding):
         """Forward method for propagating messages of GraphLayer.
@@ -187,6 +181,12 @@ class GraphLayer(MessagePassing):
             embedding=embedding,
             edges=edge_index,
         )
+
+        # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
+        out = out.view(-1, self._out_channels)
+
+        # apply final bias vector
+        out += self.bias
 
         return out
 
@@ -242,15 +242,6 @@ class GraphLayer(MessagePassing):
 
         # multiply node feature by alpha
         return x_j * alpha
-
-    def update(self, out):
-        # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
-        out = out.view(-1, self._out_channels)
-
-        if self.bias is not None:
-            out = out + self.bias
-
-        return out
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, heads={self.heads})"
@@ -498,6 +489,7 @@ class GNNAD:
         threshold_type: str = None,
         suppress_print: bool = False,
         smoothen_error: bool = True,
+        use_deterministic=False,
     ):
         self.batch = batch
         self.epoch = epoch
@@ -520,11 +512,22 @@ class GNNAD:
         self.threshold_type = threshold_type
         self.suppress_print = suppress_print
         self.smoothen_error = smoothen_error
+        self.use_deterministic = use_deterministic
 
     def _set_seeds(self):
         random.seed(self.random_seed)
         np.random.seed(self.random_seed)
         torch.manual_seed(self.random_seed)
+
+        if self.use_deterministic:
+            torch.use_deterministic_algorithms(True)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+
+    def _get_loader_generator(self):
+        g = torch.Generator()
+        g.manual_seed(self.random_seed)
+        return g
 
     def _split_train_validation(self, data):
         dataset_len = len(data)
@@ -583,23 +586,29 @@ class GNNAD:
         train_subset, validate_subset = self._split_train_validation(train_dataset)
 
         # get data loaders
+        g = self._get_loader_generator()
+
         train_dataloader = DataLoader(
             train_subset,
             batch_size=self.batch,
             shuffle=self.shuffle_train,
             num_workers=0,
+            worker_init_fn=seed_worker,
+            generator=g,
         )
 
         validate_dataloader = DataLoader(
             validate_subset,
             batch_size=self.batch,
             shuffle=False,
+            generator=g,
         )
 
         test_dataloader = DataLoader(
             test_dataset,
             batch_size=self.batch,
             shuffle=False,
+            generator=g,
         )
 
         # save to self
@@ -934,3 +943,9 @@ def eval_scores(scores, true_scores, th_steps=400):
         thresholds[i] = scores[score_index]
 
     return fmeas, thresholds
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
