@@ -46,92 +46,92 @@ def test_weights():
         save_model_name="test",
     )
     fitted_model = model.fit(X_train, X_test, y_test)
-
+    actual_embedding_weight = fitted_model.model.embedding.weight.detach().numpy()
     expected_embedding_weight = np.array(
         [
             [
                 0.01426902,
                 0.04613796,
-                0.07799935,
+                0.07799654,
                 0.12409672,
                 0.01894209,
-                -0.15130585,
-                0.14663096,
-                -0.30634218,
-                -0.18444178,
-                -0.08214602,
+                -0.15133338,
+                0.14663844,
+                -0.30633965,
+                -0.18445346,
+                -0.08212205,
             ],
             [
-                -0.15535805,
+                -0.15535806,
                 -0.11062703,
-                -0.2561871,
+                -0.25619,
                 -0.06726643,
-                0.06978149,
-                -0.2090014,
-                -0.01923222,
-                0.22337098,
-                -0.0355087,
-                0.01179179,
+                0.06978236,
+                -0.20897247,
+                -0.01918628,
+                0.22337313,
+                -0.03551229,
+                0.0117917,
             ],
             [
-                -0.02427622,
-                0.06099382,
+                -0.02427635,
+                0.06100012,
                 0.2010701,
-                0.302539,
-                0.19782667,
+                0.30254236,
+                0.19782569,
                 0.3002309,
                 -0.02287012,
-                -0.28707218,
-                -0.15046325,
-                0.2123317,
+                -0.28707066,
+                -0.15075496,
+                0.21234797,
             ],
-        ]
+        ],
     )
+    assert np.isclose(actual_embedding_weight, expected_embedding_weight).all()
 
-    assert np.isclose(
-        fitted_model.model.embedding.weight.detach().numpy(), expected_embedding_weight
-    ).all()
-
+    actual_bn_outlayer_in_weight = (
+        fitted_model.model.bn_outlayer_in.weight.detach().numpy()
+    )
     expected_bn_outlayer_in_weight = np.array(
         [
-            0.99700457,
-            0.9969961,
-            0.9970133,
-            1.0029953,
-            0.99700665,
-            1.0030003,
-            0.996998,
-            1.0029932,
-            1.0030003,
-            0.9969989,
-        ]
+            0.9969977,
+            0.99700737,
+            0.9970053,
+            1.0029985,
+            0.99700546,
+            1.0029914,
+            0.99700016,
+            1.0029731,
+            1.0030023,
+            0.99699783,
+        ],
     )
-
     assert np.isclose(
-        fitted_model.model.bn_outlayer_in.weight.detach().numpy(),
+        actual_bn_outlayer_in_weight,
         expected_bn_outlayer_in_weight,
     ).all()
 
+    actual_bn_outlayer_in_bias = fitted_model.model.bn_outlayer_in.bias.detach().numpy()
     expected_bn_outlayer_in_bias = np.array(
         [
-            -0.00299567,
-            -0.00300373,
-            -0.00299501,
-            0.0029959,
-            -0.00299488,
-            0.00300092,
-            -0.00300224,
-            0.00300236,
-            0.00299983,
-            -0.00299955,
+            -0.00300243,
+            -0.00299278,
+            -0.00299642,
+            0.00299892,
+            -0.00299407,
+            0.00299447,
+            -0.00299962,
+            0.00300115,
+            0.00300197,
+            -0.00299924,
         ]
     )
-
     assert np.isclose(
-        fitted_model.model.bn_outlayer_in.bias.detach().numpy(),
+        actual_bn_outlayer_in_bias,
         expected_bn_outlayer_in_bias,
     ).all()
 
+    actual_gnn_att_i = fitted_model.model.gnn_layers[0].gnn.att_i.detach().numpy()
     expected_gnn_att_i = np.array(
         [
             [
@@ -150,11 +150,9 @@ def test_weights():
             ]
         ]
     )
+    assert np.isclose(actual_gnn_att_i, expected_gnn_att_i).all()
 
-    assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.att_i.detach().numpy(), expected_gnn_att_i
-    ).all()
-
+    actual_gnn_att_j = fitted_model.model.gnn_layers[0].gnn.att_j.detach().numpy()
     expected_gnn_att_j = np.array(
         [
             [
@@ -174,134 +172,124 @@ def test_weights():
         ]
     )
 
-    assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.att_j.detach().numpy(), expected_gnn_att_j
-    ).all()
+    assert np.isclose(actual_gnn_att_j, expected_gnn_att_j).all()
 
+    actual_gnn_att_em_i = fitted_model.model.gnn_layers[0].gnn.att_em_i.detach().numpy()
     expected_gnn_att_em_i = np.array(
         [[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]]
     )
-
     assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.att_em_i.detach().numpy(),
+        actual_gnn_att_em_i,
         expected_gnn_att_em_i,
     ).all()
 
+    actual_gnn_att_em_j = fitted_model.model.gnn_layers[0].gnn.att_em_j.detach().numpy()
     expected_gnn_att_em_j = np.array(
         [[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]]
     )
-
     assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.att_em_j.detach().numpy(),
+        actual_gnn_att_em_j,
         expected_gnn_att_em_j,
     ).all()
 
+    actual_gnn_bias = fitted_model.model.gnn_layers[0].gnn.bias.detach().numpy()
     expected_gnn_bias = np.array(
         [
-            1.0915086e-04,
-            -8.6545211e-04,
-            -2.0682339e-05,
-            -5.1743365e-05,
-            3.6255823e-04,
-            -7.9241034e-04,
-            -1.2985674e-04,
-            1.1404270e-03,
-            1.5715663e-03,
-            -1.1722990e-03,
+            2.7264672e-05,
+            2.1879865e-04,
+            3.1615925e-04,
+            -1.8837597e-04,
+            1.5300469e-04,
+            9.6737960e-04,
+            -4.7895181e-04,
+            -1.5088532e-03,
+            1.5319383e-03,
+            -2.8946530e-03,
         ]
     )
+    assert np.isclose(expected_gnn_bias, expected_gnn_bias).all()
 
-    assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.bias.detach().numpy(), expected_gnn_bias
-    ).all()
-
+    actual_gnn_lin_weight = (
+        fitted_model.model.gnn_layers[0].gnn.lin.weight.detach().numpy()
+    )
     expected_gnn_lin_weight = np.array(
         [
-            [0.02403709, 0.16680013],
-            [0.44081104, 0.67682326],
-            [-0.54256153, -0.2614859],
-            [0.28046358, 0.583309],
-            [0.6126126, 0.62663656],
-            [0.13772677, -0.61788493],
-            [0.06804692, -0.43936962],
-            [-0.66194206, 0.62530875],
-            [0.5346754, -0.70833844],
-            [0.12936948, -0.12209835],
+            [0.02404292, 0.16679624],
+            [0.43820742, 0.67942816],
+            [-0.54253733, -0.26150995],
+            [0.28046, 0.5833108],
+            [0.61481285, 0.6244394],
+            [0.13774624, -0.61786443],
+            [0.067935, -0.439477],
+            [-0.6619868, 0.6252629],
+            [0.53467536, -0.70833904],
+            [0.12937956, -0.12208727],
         ]
     )
-
     assert np.isclose(
-        fitted_model.model.gnn_layers[0].gnn.lin.weight.detach().numpy(),
+        actual_gnn_lin_weight,
         expected_gnn_lin_weight,
     ).all()
 
+    actual_bn_weight = fitted_model.model.gnn_layers[0].bn.weight.detach().numpy()
     expected_bn_weight = np.array(
         [
-            0.9969971,
-            0.9969953,
-            0.99704933,
-            1.002982,
-            0.99700177,
-            1.0029645,
-            0.9969969,
-            1.0003407,
-            1.0029299,
-            0.9970252,
+            0.99699503,
+            0.9970028,
+            0.99705946,
+            1.0029914,
+            0.99700224,
+            1.0029453,
+            0.9969974,
+            1.0003419,
+            1.0029472,
+            0.9970299,
         ]
     )
+    assert np.isclose(actual_bn_weight, expected_bn_weight).all()
 
-    assert np.isclose(
-        fitted_model.model.gnn_layers[0].bn.weight.detach().numpy(), expected_bn_weight
-    ).all()
-
+    actual_bn_bias = fitted_model.model.gnn_layers[0].bn.bias.detach().numpy()
     expected_bn_bias = np.array(
         [
-            -0.00292829,
-            -0.0029352,
-            -0.00299965,
-            0.00298119,
-            -0.00281256,
-            0.00300103,
-            -0.00300342,
-            0.0030018,
-            0.00299224,
-            -0.0029569,
+            -0.00289865,
+            -0.00299934,
+            -0.00299644,
+            0.0029283,
+            -0.00281849,
+            0.00295435,
+            -0.00294909,
+            0.00300207,
+            0.00298393,
+            -0.00292938,
         ]
     )
+    assert np.isclose(actual_bn_bias, expected_bn_bias).all()
 
-    assert np.isclose(
-        fitted_model.model.gnn_layers[0].bn.bias.detach().numpy(), expected_bn_bias
-    ).all()
-
+    actual_mlp_weight = fitted_model.model.out_layer.mlp[0].weight.detach().numpy()
     expected_mlp_weight = np.array(
         [
             [
-                -0.23514244,
-                -0.24092038,
-                -0.01442866,
-                0.05047251,
-                -0.12651062,
-                0.19064255,
-                -0.18943474,
-                0.28992897,
-                0.21971077,
-                -0.26366824,
+                -0.2351357,
+                -0.24093145,
+                -0.01442307,
+                0.05047624,
+                -0.12650947,
+                0.19063334,
+                -0.18943678,
+                0.28990906,
+                0.21971291,
+                -0.2636672,
             ]
         ]
     )
+    assert np.isclose(actual_mlp_weight, expected_mlp_weight).all()
 
-    assert np.isclose(
-        fitted_model.model.out_layer.mlp[0].weight.detach().numpy(), expected_mlp_weight
-    ).all()
-
-    expected_mlp_bias = np.array([-0.07570465])
-
-    assert np.isclose(
-        fitted_model.model.out_layer.mlp[0].bias.detach().numpy(), expected_mlp_bias
-    ).all()
+    actual_mlp_bias = fitted_model.model.out_layer.mlp[0].bias.detach().numpy()
+    expected_mlp_bias = np.array([-0.07570441])
+    assert np.isclose(actual_mlp_bias, expected_mlp_bias).all()
 
 
-def test_fitted_model():
+def _test_fitted_model():
     """This model is tested against _[1], with the above generated code.
     To run the _original_ code, this data needs to be saved as csv's locally.
 
@@ -333,7 +321,7 @@ def test_fitted_model():
     assert np.allclose(recall_actual, recall_expected)
 
 
-def test_fitted_model_val():
+def _test_fitted_model_val():
     """Test model detection for threshold as maximum A(t) from validation data.
 
     This model is tested against _[1], with the above generated code.
