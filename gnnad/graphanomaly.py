@@ -766,7 +766,7 @@ class GNNAD:
         best_model = self.model.to(self.device)
 
         # store results to self
-        _, self.test_result = self._test(best_model, self.test_dataloader)
+        test_avg_loss, self.test_result = self._test(best_model, self.test_dataloader)
         _, self.validate_result = self._test(best_model, self.validate_dataloader)
 
         test_labels = self.test_result[2, :, 0]
@@ -811,6 +811,7 @@ class GNNAD:
         self.recall = recall
         self.f1 = f1
         self.auc = auc
+        self.test_avg_loss = test_avg_loss
 
         if not self.suppress_print:
             print("=========================** Result **============================\n")
