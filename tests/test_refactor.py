@@ -36,7 +36,7 @@ y_test[342:356] = 1
 y_test[752:772] = 1
 
 
-def test_weights():
+def test_results():
     model = GNNAD(
         shuffle_train=False,
         topk=1,
@@ -44,6 +44,7 @@ def test_weights():
         slide_win=2,
         dim=10,
         save_model_name="test",
+        use_deterministic=True,
     )
     fitted_model = model.fit(X_train, X_test, y_test)
 
@@ -62,6 +63,103 @@ def test_weights():
     test_avg_loss_expected = 40.152103900909424
     test_avg_loss_actual = fitted_model.test_avg_loss
     assert np.allclose(test_avg_loss_actual, test_avg_loss_expected, atol=1)
+
+
+def test_weights():
+    model = GNNAD(
+        shuffle_train=False,
+        topk=1,
+        epoch=1,
+        slide_win=2,
+        dim=10,
+        save_model_name="test",
+        use_deterministic=True,
+    )
+    fitted_model = model.fit(X_train, X_test, y_test)
+    actual_embedding_weight = fitted_model.model.embedding.weight.detach().numpy()
+    expected_embedding_weight = np.array(
+        [
+            [
+                0.01426902,
+                0.04613796,
+                0.07799654,
+                0.12409672,
+                0.01894209,
+                -0.15133338,
+                0.14663844,
+                -0.30633965,
+                -0.18445346,
+                -0.08212205,
+            ],
+            [
+                -0.15535806,
+                -0.11062703,
+                -0.25619,
+                -0.06726643,
+                0.06978236,
+                -0.20897247,
+                -0.01918628,
+                0.22337313,
+                -0.03551229,
+                0.0117917,
+            ],
+            [
+                -0.02427635,
+                0.06100012,
+                0.2010701,
+                0.30254236,
+                0.19782569,
+                0.3002309,
+                -0.02287012,
+                -0.28707066,
+                -0.15075496,
+                0.21234797,
+            ],
+        ],
+    )
+    assert np.isclose(actual_embedding_weight, expected_embedding_weight).all()
+
+    actual_bn_outlayer_in_weight = (
+        fitted_model.model.bn_outlayer_in.weight.detach().numpy()
+    )
+    expected_bn_outlayer_in_weight = np.array(
+        [
+            0.9969977,
+            0.99700737,
+            0.9970053,
+            1.0029985,
+            0.99700546,
+            1.0029914,
+            0.99700016,
+            1.0029731,
+            1.0030023,
+            0.99699783,
+        ],
+    )
+    assert np.isclose(
+        actual_bn_outlayer_in_weight,
+        expected_bn_outlayer_in_weight,
+    ).all()
+
+    actual_bn_outlayer_in_bias = fitted_model.model.bn_outlayer_in.bias.detach().numpy()
+    expected_bn_outlayer_in_bias = np.array(
+        [
+            -0.00300243,
+            -0.00299278,
+            -0.00299642,
+            0.00299892,
+            -0.00299407,
+            0.00299447,
+            -0.00299962,
+            0.00300115,
+            0.00300197,
+            -0.00299924,
+        ]
+    )
+    assert np.isclose(
+        actual_bn_outlayer_in_bias,
+        expected_bn_outlayer_in_bias,
+    ).all()
 
 
 def _test_fitted_model():
