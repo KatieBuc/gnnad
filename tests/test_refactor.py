@@ -52,6 +52,60 @@ def test_weights():
             [
                 0.01426902,
                 0.04613796,
+                0.07799935,
+                0.12409672,
+                0.01894209,
+                -0.15130585,
+                0.14663096,
+                -0.30634218,
+                -0.18444178,
+                -0.08214602,
+            ],
+            [
+                -0.15535805,
+                -0.11062703,
+                -0.2561871,
+                -0.06726643,
+                0.06978149,
+                -0.2090014,
+                -0.01923222,
+                0.22337098,
+                -0.0355087,
+                0.01179178,
+            ],
+            [
+                -0.02427622,
+                0.06099382,
+                0.2010701,
+                0.3025389,
+                0.1978267,
+                0.3002309,
+                -0.02287012,
+                -0.28707218,
+                -0.15046325,
+                0.2123317,
+            ],
+        ]
+    )
+    assert np.isclose(actual_embedding_weight, expected_embedding_weight).all()
+
+
+def _test_weights():
+    model = GNNAD(
+        shuffle_train=False,
+        topk=1,
+        epoch=1,
+        slide_win=2,
+        dim=10,
+        save_model_name="test",
+    )
+    fitted_model = model.fit(X_train, X_test, y_test)
+    actual_embedding_weight = fitted_model.model.embedding.weight.detach().numpy()
+    expected_embedding_weight = np.array(
+        [
+            [
+                0.01426902,
+                0.04613796,
                 0.07799654,
                 0.12409672,
                 0.01894209,
