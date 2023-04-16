@@ -52,7 +52,7 @@ def test_weights():
     assert np.allclose(precision_actual, precision_expected, atol=0.01)
 
     recall_expected = 0.4117647058823529
-    recall_actual = fitted_model.f1
+    recall_actual = fitted_model.recall
     assert np.allclose(recall_actual, recall_expected, atol=0.01)
 
     f1_expected = 0.5384615384615384
