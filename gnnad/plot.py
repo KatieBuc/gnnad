@@ -124,29 +124,32 @@ def plot_predictions(
 
 
 def plot_sensor_error_scores(
-    fitted_model,
-    X_test,
-    fig_cols=1,
-    color="r",
-    s=10,
-    alpha=0.4,
-    figsize=(20, 20)
+    fitted_model, X_test, fig_cols=1, color="r", s=10, alpha=0.4, figsize=(20, 20)
 ):
-
     n_nodes = fitted_model.n_nodes
-    fig_rows = n_nodes // fig_cols if n_nodes % fig_cols == 0 else n_nodes // fig_cols + 1
+    fig_rows = (
+        n_nodes // fig_cols if n_nodes % fig_cols == 0 else n_nodes // fig_cols + 1
+    )
 
     fig, axs = plt.subplots(fig_rows, fig_cols, figsize=figsize)
 
     sensor_preds = fitted_model.get_sensor_preds()
-    sensor_preds = pd.DataFrame(sensor_preds.T, index=X_test.index[fitted_model.slide_win:], columns=X_test.columns)
+    sensor_preds = pd.DataFrame(
+        sensor_preds.T,
+        index=X_test.index[fitted_model.slide_win :],
+        columns=X_test.columns,
+    )
 
     for i, ax in enumerate(axs.flat):
         if i >= n_nodes:
             break
 
         node_num = X_test.columns[i]
-        err_score = pd.DataFrame(fitted_model.test_err_scores[i, :], index= X_test.index[fitted_model.slide_win:], columns=[node_num])
+        err_score = pd.DataFrame(
+            fitted_model.test_err_scores[i, :],
+            index=X_test.index[fitted_model.slide_win :],
+            columns=[node_num],
+        )
         ax.plot(err_score, alpha=0.5)
 
         ax.scatter(
