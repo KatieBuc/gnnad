@@ -89,95 +89,40 @@ def test_weights():
     )
     assert np.isclose(actual_embedding_weight, expected_embedding_weight).all()
 
-
-def _test_weights():
-    model = GNNAD(
-        shuffle_train=False,
-        topk=1,
-        epoch=1,
-        slide_win=2,
-        dim=10,
-        save_model_name="test",
-    )
-    fitted_model = model.fit(X_train, X_test, y_test)
-    actual_embedding_weight = fitted_model.model.embedding.weight.detach().numpy()
-    expected_embedding_weight = np.array(
-        [
-            [
-                0.01426902,
-                0.04613796,
-                0.07799654,
-                0.12409672,
-                0.01894209,
-                -0.15133338,
-                0.14663844,
-                -0.30633965,
-                -0.18445346,
-                -0.08212205,
-            ],
-            [
-                -0.15535806,
-                -0.11062703,
-                -0.25619,
-                -0.06726643,
-                0.06978236,
-                -0.20897247,
-                -0.01918628,
-                0.22337313,
-                -0.03551229,
-                0.0117917,
-            ],
-            [
-                -0.02427635,
-                0.06100012,
-                0.2010701,
-                0.30254236,
-                0.19782569,
-                0.3002309,
-                -0.02287012,
-                -0.28707066,
-                -0.15075496,
-                0.21234797,
-            ],
-        ],
-    )
-    assert np.isclose(actual_embedding_weight, expected_embedding_weight).all()
-
     actual_bn_outlayer_in_weight = (
         fitted_model.model.bn_outlayer_in.weight.detach().numpy()
     )
     expected_bn_outlayer_in_weight = np.array(
         [
-            0.9969977,
-            0.99700737,
-            0.9970053,
-            1.0029985,
-            0.99700546,
-            1.0029914,
-            0.99700016,
-            1.0029731,
-            1.0030023,
-            0.99699783,
-        ],
+            0.99700457,
+            0.9969961,
+            0.9970133,
+            1.0029953,
+            0.99700665,
+            1.0030003,
+            0.996998,
+            1.0029932,
+            1.0030003,
+            0.9969989,
+        ]
     )
     assert np.isclose(
         actual_bn_outlayer_in_weight,
         expected_bn_outlayer_in_weight,
     ).all()
-
     actual_bn_outlayer_in_bias = fitted_model.model.bn_outlayer_in.bias.detach().numpy()
     expected_bn_outlayer_in_bias = np.array(
         [
-            -0.00300243,
-            -0.00299278,
-            -0.00299642,
-            0.00299892,
-            -0.00299407,
-            0.00299447,
-            -0.00299962,
-            0.00300115,
-            0.00300197,
-            -0.00299924,
+            -0.00299567,
+            -0.00300373,
+            -0.00299501,
+            0.0029959,
+            -0.00299488,
+            0.00300092,
+            -0.00300224,
+            0.00300236,
+            0.00299983,
+            -0.00299955,
         ]
     )
     assert np.isclose(
@@ -246,6 +191,8 @@ def _test_weights():
         expected_gnn_att_em_j,
     ).all()
 
+
+def _test_weights():
     actual_gnn_bias = fitted_model.model.gnn_layers[0].gnn.bias.detach().numpy()
     expected_gnn_bias = np.array(
         [
