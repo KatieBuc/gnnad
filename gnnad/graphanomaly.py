@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 from pathlib import Path
 
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -16,6 +17,8 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import add_self_loops, remove_self_loops, softmax
+from torchsummary import summary
+from sklearn.metrics import confusion_matrix, accuracy_score
 
 __author__ = ["KatieBuc"]
 
@@ -586,7 +589,7 @@ class GNNAD:
         train_subset, validate_subset = self._split_train_validation(train_dataset)
 
         # get data loaders
-        g = self._get_loader_generator()
+        g = self._get_loader_generator() if self.use_deterministic else None
 
         train_dataloader = DataLoader(
             train_subset,
@@ -811,9 +814,7 @@ class GNNAD:
 
         if not self.suppress_print:
             print("=========================** Result **============================\n")
-            print(f"F1 score: {f1}")
-            print(f"precision: {precision}")
-            print(f"recall: {recall}\n")
+            self.print_eval_metrics()
 
     def fit(self, X_train, X_test, y_test):
         self._set_seeds()
@@ -824,6 +825,59 @@ class GNNAD:
         self._get_score()
 
         return self
+
+    def summary(self):
+        return summary(self.model, (self.n_nodes, self.slide_win))
+
+    def print_named_parameters(self):
+        for name, param in self.model.named_parameters():
+            print(name, param)
+
+    def sensor_threshold_preds(self, tau):
+        threshold_i = np.empty(self.n_nodes)
+        for i in range(self.n_nodes):
+            idxs = self.model.learned_graph[i].numpy()
+            threshold_i[i] = np.percentile(
+                self.validate_err_scores[idxs].flatten(), tau
+            )
+
+        pred_labels = np.empty(self.test_err_scores.shape[1])
+
+        for t in range(self.test_err_scores.shape[1]):
+            pred_labels[t] = any(self.test_err_scores[:, t] > threshold_i)
+
+        self.threshold_i = threshold_i
+        return pred_labels.astype(int)
+
+    def get_sensor_preds(self):
+        sensor_preds = np.empty(self.test_err_scores.shape)
+
+        for t in range(self.test_err_scores.shape[1]):
+            sensor_preds[:, t] = self.test_err_scores[:, t] > self.threshold_i
+
+        return sensor_preds
+
+    def print_eval_metrics(self, preds=None):
+        preds = self.pred_labels if preds is None else preds
+        recall, precision, accuracy, specificity, f1 = eval_metrics(
+            self.test_labels, preds
+        )
+        print("recall: %.1f" % recall)
+        print("precision: %.1f" % precision)
+        print("accuracy: %.1f" % accuracy)
+        print("specificity: %.1f" % specificity)
+        print("f1: %.1f" % f1)
+
+
+def eval_metrics(truth, preds):
+    precision = precision_score(truth, preds) * 100
+    recall = recall_score(truth, preds) * 100
+    f1 = f1_score(truth, preds) * 100
+    accuracy = accuracy_score(truth, preds) * 100
+    tn, fp, fn, tp = confusion_matrix(truth, preds).ravel()
+    specificity = tn / (tn + fp) * 100
+
+    return recall, precision, accuracy, specificity, f1
 
 
 def loss_func(y_pred, y_true):
