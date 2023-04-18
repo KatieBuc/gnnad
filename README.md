@@ -6,9 +6,11 @@ This package accompanies work that further develops this model [1], and introduc
 
 ## Quick start
 
-Consider data collected on the Herbert river network, at these locations. We see that some locations closer to the outlet are influenced by tidal patterns.
+Consider data collected on the Herbert river network, at these sensor locations:
 
-<img src="https://github.com/KatieBuc/gnnad/files/11257391/herbert_ssn.pdf " alt="Herbert river sensor locations" title="">
+<img src="https://user-images.githubusercontent.com/34525024/232662278-bc6973ae-6ccf-443d-99d4-204eada127d6.JPG" width="40%" height="40%" alt="Herbert river sensor locations" title="">
+
+The sensors measure water level, from within the river.
 
 Assuming we have pre-processed the data, we instantiate and fit the model:
 ```
@@ -22,11 +24,13 @@ test_predict = fitted_model.test_result[0, :, i]
 
 We can visualise the predicted values vs. actual values, with helper functions in the plot module.
 
-<img src="https://user-images.githubusercontent.com/34525024/232661014-99ebb7c0-7e4a-4f54-b09a-fedb5c5bbaf1.jpg" width="70%" height="70%" alt="Herbert river sensor locations" title="">
+<img src="https://user-images.githubusercontent.com/34525024/232661014-99ebb7c0-7e4a-4f54-b09a-fedb5c5bbaf1.jpg" width="40%" height="40%" alt="Herbert river sensor locations" title="">
 
-The error scores that are obtained from this forecasting model are then transformed, and if they exceed a calculated threshold, then flagged as an anomaly.
+Note that some locations closer to the outlet are influenced by tidal patterns.
 
-The performance of the anmaly detection classification model can be called:
+The error scores that are obtained from this forecasting model are then transformed and, if they exceed the calculated threshold, flagged as an anomaly.
+
+The performance of the anomaly detection classification model can be analysed by:
 ```
 fitted_model.print_eval_metrics()
 >>> recall: 30.4
