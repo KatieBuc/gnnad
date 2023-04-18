@@ -26,9 +26,7 @@ We can visualise the predicted values vs. actual values, with helper functions i
 
 <img src="https://user-images.githubusercontent.com/34525024/232661014-99ebb7c0-7e4a-4f54-b09a-fedb5c5bbaf1.jpg" width="40%" height="40%" alt="Herbert river sensor locations" title="">
 
-Note that some locations closer to the outlet are influenced by tidal patterns.
-
-The error scores that are obtained from this forecasting model are then transformed and, if they exceed the calculated threshold, flagged as an anomaly.
+Note that some locations closer to the outlet are influenced by tidal patterns. The error scores that are obtained from this forecasting model are then transformed and, if they exceed the calculated threshold, flagged as an anomaly. The bottom indicates if any sensor flagged an anomaly, and compares this to the ground truth labels, for the test data.
 
 The performance of the anomaly detection classification model can be analysed by:
 ```
