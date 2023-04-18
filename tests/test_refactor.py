@@ -42,7 +42,7 @@ def test_results():
         topk=1,
         epoch=1,
         slide_win=2,
-        dim=10,
+        embed_dim=10,
         save_model_name="test",
         use_deterministic=True,
     )
@@ -71,7 +71,7 @@ def test_weights():
         topk=1,
         epoch=1,
         slide_win=2,
-        dim=10,
+        embed_dim=10,
         save_model_name="test",
         use_deterministic=True,
     )
