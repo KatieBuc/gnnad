@@ -10,6 +10,7 @@ Consider data collected on the Herbert river network, at these locations. We see
 
 <img src="https://github.com/KatieBuc/gnnad/files/11257391/herbert_ssn.pdf " alt="Herbert river sensor locations" title="">
 
+
 Assuming we have pre-processed the data, we instantiate and fit the model:
 ```
 # run model
@@ -22,7 +23,7 @@ test_predict = fitted_model.test_result[0, :, i]
 
 We can visualise the predicted values vs. actual values, with helper functions in the plot module.
 
-<img src="https://github.com/KatieBuc/gnnad/files/11257392/Herbert.pdf " alt="Herbert river sensor locations" title="" style="display: inline-block; margin: 0 auto; max-width: 600px">
+[Herbert.pdf](https://github.com/KatieBuc/gnnad/files/11257480/Herbert.pdf)
 
 The error scores that are obtained from this forecasting model are then transformed, and if they exceed a calculated threshold, then flagged as an anomaly.
 
