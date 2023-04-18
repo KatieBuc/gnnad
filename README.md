@@ -22,7 +22,7 @@ test_predict = fitted_model.test_result[0, :, i]
 
 We can visualise the predicted values vs. actual values, with helper functions in the plot module.
 
-<img src="https://github.com/KatieBuc/gnnad/files/11257392/Herbert.pdf " alt="Herbert river sensor locations" title="">
+<img src="https://github.com/KatieBuc/gnnad/files/11257392/Herbert.pdf " alt="Herbert river sensor locations" title="" style="display: inline-block; margin: 0 auto; max-width: 600px">
 
 The error scores that are obtained from this forecasting model are then transformed, and if they exceed a calculated threshold, then flagged as an anomaly.
 
