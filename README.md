@@ -23,7 +23,7 @@ test_predict = fitted_model.test_result[0, :, i]
 
 We can visualise the predicted values vs. actual values, with helper functions in the plot module.
 
-[Herbert.pdf](https://github.com/KatieBuc/gnnad/files/11257480/Herbert.pdf)
+![Herbert.pdf](https://github.com/KatieBuc/gnnad/files/11257480/Herbert.pdf)
 
 The error scores that are obtained from this forecasting model are then transformed, and if they exceed a calculated threshold, then flagged as an anomaly.
 
@@ -63,6 +63,7 @@ poetry install
 ## References
 
 [1] Buchhorn, Katie, et al. "Graph Neural Network-Based Anomaly Detection for River Network Systems" Under review.
+
 [2] Deng, Ailin, and Bryan Hooi. "Graph neural network-based anomaly detection in multivariate time series." Proceedings of the AAAI conference on artificial intelligence. Vol. 35. No. 5. 2021.
 
 
