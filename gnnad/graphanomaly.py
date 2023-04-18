@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Graph Neural Network-Based Anomaly Detection.
+
+References
+----------
+[1] Deng, Ailin, and Bryan Hooi. "Graph neural network-based anomaly detection in multivariate time series."
+Proceedings of the AAAI conference on artificial intelligence. Vol. 35. No. 5. 2021.
+"""
+
 import math
 import os
 import random
@@ -30,19 +39,19 @@ class TimeDataset(Dataset):
 
     Attributes
     ----------
-    raw_data (list):
+    raw_data : list
         A list of raw data
-    config (dict):
+    config : dict
         A dictionary containing the configuration of dataset
-    edge_index (np.ndarray):
+    edge_index : np.ndarray
         Edge index of the dataset
-    mode (str):
+    mode : str
         The mode of dataset, either 'train' or 'test'
-    x (torch.Tensor):
+    x : torch.Tensor
         Feature data
-    y (torch.Tensor):
+    y : torch.Tensor
         Target data
-    labels (torch.Tensor):
+    labels : torch.Tensor
         Anomaly labels of the data
     """
 
@@ -98,18 +107,30 @@ class GraphLayer(MessagePassing):
 
     Attributes
     ----------
-    in_channels (int): number of input channels for layer
-    out_channels (int): number of output channels for layer
-    heads (int): number of heads for multi-head attention
-    concat_heads (bool): whether to concatenate across heads
-    negative_slope (float): slope for LeakyReLU
-    dropout (float): dropout rate
-    lin (nn.Module): Linear layer for transforming input
-    att_i (nn.Parameter): attention parameter related to x_i
-    att_j (nn.Parameter): attention parameter related to x_j
-    att_em_i (nn.Parameter): attention parameter related to embedding of x_i
-    att_em_j (nn.Parameter): attention parameter related to embedding of x_j
-    bias (nn.Parameter): bias parameter added after message propagation
+    in_channels : int
+        Number of input channels for the layer
+    out_channels : int
+        Number of output channels for the layer
+    heads : int
+        Number of heads for multi-head attention
+    concat_heads : bool
+        Whether to concatenate across heads
+    negative_slope : float
+        Slope for LeakyReLU
+    dropout : float
+        Dropout rate
+    lin : nn.Module
+        Linear layer for transforming input
+    att_i : nn.Parameter
+        Attention parameter related to x_i
+    att_j : nn.Parameter
+        Attention parameter related to x_j
+    att_em_i : nn.Parameter
+        Attention parameter related to embedding of x_i
+    att_em_j : nn.Parameter
+        Attention parameter related to embedding of x_j
+    bias : nn.Parameter
+        Bias parameter added after message propagation
     """
 
     def __init__(
@@ -252,8 +273,12 @@ class GraphLayer(MessagePassing):
 
 class OutLayer(nn.Module):
     """
-    Output layer, elementwise multiply representations, z_i, with the corresponding
-    timeseries embedding, v_i, and use the
+    Output layer used to transform graph layers into a prediction.
+
+    Attributes
+    ----------
+    mlp : nn.ModuleList
+        A module list that contains a sequence of transformations in the output layer
     """
 
     def __init__(self, in_num, layer_num, inter_dim):
@@ -284,6 +309,19 @@ class OutLayer(nn.Module):
         self.mlp = nn.ModuleList(modules)
 
     def forward(self, x):
+        """
+        Forward pass of output layer.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor
+
+        Returns
+        -------
+        out : torch.Tensor
+            Output tensor
+        """
         out = x
 
         for mod in self.mlp:
@@ -299,10 +337,29 @@ class OutLayer(nn.Module):
 
 class GNNLayer(nn.Module):
     """
-    Calculates the representation z_i = ReLU(...) in eq (5) of [1].
+    Calculates the node representations, z_i, in eq (5) of [1].
+
+    Attributes
+    ----------
+    gnn : GraphLayer
+        Graph convolutional layer
+    bn : nn.BatchNorm1d
+        Batch normalization layer
+    relu : nn.ReLU
+        ReLU activation function
     """
 
     def __init__(self, in_channel, out_channel, heads=1):
+        """
+        Parameters
+        ----------
+        in_channels : int
+            Number of input channels for the layer
+        out_channels : int
+            Number of output channels for the layer
+        heads : int
+            Number of heads for multi-head attention
+        """
         super(GNNLayer, self).__init__()
 
         self.gnn = GraphLayer(in_channel, out_channel, heads=heads, concat_heads=False)
@@ -316,6 +373,27 @@ class GNNLayer(nn.Module):
 
 
 class GDN(nn.Module):
+    """
+    A graph-based network model for time series data, as introduced in [1].
+
+    Attributes
+    ----------
+    embedding : nn.Embedding
+        Node embeddings for the graph
+    bn_outlayer_in : nn.BatchNorm1d
+        Batch normalization layer applied before the output layer
+    gnn_layers : nn.ModuleList
+        List of GNNLayer instances used in the network
+    learned_graph : tensor
+        Topk indices represneting the learned graph, with shape [N, top_k]
+    out_layer : OutLayer
+        Output layer for the network
+    dp : nn.Dropout
+        Dropout layer applied before the output layer
+    cache_fc_edge_idx : tensor
+        has shape [2, (E x batch_size)] where E is the number of edges
+    """
+
     def __init__(
         self,
         fc_edge_idx,
@@ -326,6 +404,24 @@ class GDN(nn.Module):
         out_layer_num=1,
         topk=20,
     ):
+        """
+        Parameters
+        ----------
+        fc_edge_idx : torch.LongTensor
+            Edge indices of fully connected graph for the input time series
+        n_nodes : int
+            Number of nodes in the graph
+        embed_dim : int, optional (default=64)
+            Dimension of node embeddings
+        out_layer_inter_dim : int, optional (default=256)
+            Intermediate dimension of the output layer
+        slide_win : int, optional (default=15)
+            Size of sliding window used for input time series
+        out_layer_num : int, optional (default=1)
+            Number of layers in OutLayer
+        topk : int, optional (default=20)
+            Number of top-k neighbors to consider when creating learned graph
+        """
         super(GDN, self).__init__()
 
         self.fc_edge_idx = fc_edge_idx
@@ -349,16 +445,9 @@ class GDN(nn.Module):
                 )
             ]
         )
-
-        self.node_embedding = None
-        self.learned_graph = None
-
         self.out_layer = OutLayer(
             self.embed_dim, self.out_layer_num, inter_dim=self.out_layer_inter_dim
         )
-
-        self.cache_fc_edge_idx = None
-        self.cache_embed_index = None
 
         self.dp = nn.Dropout(0.2)
         nn.init.kaiming_uniform_(self.embedding.weight, a=math.sqrt(5))
@@ -370,10 +459,9 @@ class GDN(nn.Module):
 
         x = x.view(-1, self.slide_win).contiguous()  # [(batch_size x N), slide_win]
 
-        if self.cache_fc_edge_idx is None:
-            self.cache_fc_edge_idx = get_batch_edge_index(
-                self.fc_edge_idx, batch_size, self.n_nodes
-            ).to(device)
+        self.cache_fc_edge_idx = get_batch_edge_index(
+            self.fc_edge_idx, batch_size, self.n_nodes
+        ).to(device)
 
         idxs = torch.arange(self.n_nodes).to(device)
         weights = self.embedding(idxs).detach().clone()  # [N, embed_dim]
@@ -466,7 +554,7 @@ def get_batch_edge_index(edge_index, batch_size, n_nodes):
 
 class GNNAD:
     """
-    Graph Neural Network-based Anomaly Detection in Multivariate Timeseries.
+    Graph Neural Network-based Anomaly Detection for Multivariate Timeseries.
     """
 
     def __init__(
