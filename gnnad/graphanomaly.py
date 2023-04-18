@@ -414,7 +414,7 @@ class GDN(nn.Module):
         embed_dim : int, optional (default=64)
             Dimension of node embeddings
         out_layer_inter_dim : int, optional (default=256)
-            Intermediate dimension of the output layer
+            Internal dimensions of layers in the output network
         slide_win : int, optional (default=15)
             Size of sliding window used for input time series
         out_layer_num : int, optional (default=1)
@@ -562,16 +562,14 @@ class GNNAD:
         batch: int = 128,
         epoch: int = 100,
         slide_win: int = 15,
-        dim: int = 64,
+        embed_dim: int = 64,
         slide_stride: int = 5,
-        comment: str = "",
         random_seed: int = 0,
         out_layer_num: int = 1,
         out_layer_inter_dim: int = 256,
         decay: float = 0,
         validate_ratio: float = 0.1,
         topk: int = 20,
-        data_subdir: str = "msl",
         device: str = "cpu",
         save_model_name: str = "",
         early_stop_win: int = 15,
@@ -580,21 +578,65 @@ class GNNAD:
         threshold_type: str = None,
         suppress_print: bool = False,
         smoothen_error: bool = True,
-        use_deterministic=False,
+        use_deterministic: bool = False,
     ):
+        """
+        Parameters
+        ----------
+        batch : int, optional (default=128)
+            Batch size for training the model
+        epoch : int, optional (default=100)
+            Number of epochs to train the model
+        slide_win : int, optional (default=15)
+            Size of sliding window used as feature input
+        embed_dim : int, optional (default=64)
+            Dimension of the node embeddings in the GDN model
+        slide_stride : int, optional (default=5)
+            Stride of the sliding window
+        random_seed : int, optional (default=0)
+            Seed for random number generation for reproducibility
+        out_layer_num : int, optional (default=1)
+            Number of layers in the output network
+        out_layer_inter_dim : int, optional (default=256)
+            Internal dimensions of layers in the output network
+        decay : float, optional (default=0)
+            Weight decay factor for regularization during training
+        validate_ratio : float, optional (default=0.1)
+            Ratio of data to use for validation during training
+        topk : int, optional (default=20)
+            Number of permissable neighbours in the learned graph
+        device : str, optional (default="cpu")
+            Device to use for training the model ('cpu' or 'cuda')
+        save_model_name : str, optional (default="")
+            Name to use for saving the trained model
+        early_stop_win : int, optional (default=15)
+            Number of consecutive epochs without improvement in validation loss to
+            trigger early stopping
+        lr : float, optional (default=0.001)
+            Learning rate for training the model
+        shuffle_train : bool, optional (default=True)
+            Whether to shuffle the training data during training
+        threshold_type : str, optional (default=None)
+            Type of threshold to use for anomaly detection ("max_validation")
+        suppress_print : bool, optional (default=False)
+            Whether to suppress print statements during training
+        smoothen_error : bool, optional (default=True)
+            Whether to smoothen the anomaly scores before thresholding
+        use_deterministic : bool, optional (default=False)
+            Whether to use deterministic algorithms for reproducibility and unit testing
+        """
+
         self.batch = batch
         self.epoch = epoch
         self.slide_win = slide_win
-        self.dim = dim
+        self.embed_dim = embed_dim
         self.slide_stride = slide_stride
-        self.comment = comment
         self.random_seed = random_seed
         self.out_layer_num = out_layer_num
         self.out_layer_inter_dim = out_layer_inter_dim
         self.decay = decay
         self.validate_ratio = validate_ratio
         self.topk = topk
-        self.data_subdir = data_subdir
         self.device = device
         self.save_model_name = save_model_name
         self.early_stop_win = early_stop_win
@@ -703,9 +745,9 @@ class GNNAD:
         )
 
         # save to self
+        self.n_nodes = len(feature_list)
         self.fc_edge_idx = fc_edge_idx
         self.feature_list = feature_list
-        self.n_nodes = len(feature_list)
         self.test_input = test_input
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
@@ -722,7 +764,7 @@ class GNNAD:
             out_layer_num=self.out_layer_num,
             out_layer_inter_dim=self.out_layer_inter_dim,
             topk=self.topk,
-            embed_dim=self.dim,
+            embed_dim=self.embed_dim,
         ).to(self.device)
 
         model._initialise_layers()
@@ -732,7 +774,7 @@ class GNNAD:
     def _get_model_path(self):
         datestr = datetime.now().strftime("%m%d-%H%M%S")
         model_name = datestr if len(self.save_model_name) == 0 else self.save_model_name
-        model_path = f"./pretrained/{self.data_subdir}/{model_name}.pt"
+        model_path = f"./pretrained/{model_name}.pt"
         dirname = os.path.dirname(model_path)
         Path(dirname).mkdir(parents=True, exist_ok=True)
 
@@ -1088,7 +1130,7 @@ def eval_scores(scores, true_scores, th_steps=400):
     return fmeas, thresholds
 
 
-def seed_worker(worker_id):
+def seed_worker():
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
