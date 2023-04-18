@@ -10,9 +10,7 @@ Consider data collected on the Herbert river network, at these sensor locations:
 
 <img src="https://user-images.githubusercontent.com/34525024/232662278-bc6973ae-6ccf-443d-99d4-204eada127d6.JPG" width="35%" height="35%" alt="Herbert river sensor locations" title="">
 
-The sensors measure water level, from within the river.
-
-Assuming we have pre-processed the data, we instantiate and fit the model:
+The sensors measure water level, from within the river. Assuming we have pre-processed the data, we instantiate and fit the model:
 ```
 # run model
 model = GNNAD(threshold_type="max_validation", topk=6, slide_win=200)
