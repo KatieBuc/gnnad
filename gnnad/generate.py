@@ -15,7 +15,7 @@ __author__ = ["KatieBuc"]
 
 class GenerateGaussian:
     """
-    Generate random Gaussian field and sample locations
+    Generate smoothened random Gaussian field and sample locations.
     """
 
     def __init__(
@@ -31,6 +31,29 @@ class GenerateGaussian:
         var=1,
         len_scale=2,
     ):
+        """
+        -----------
+        seed: int
+            Seed for random number generator.
+        n_obs: int
+            Number of observation points to be sampled.
+        x_lim: tuple
+            Tuple of x-axis lower and upper limits for field generation.
+        y_lim: tuple
+            Tuple of y-axis lower and upper limits for field generation.
+        T: int
+            Number of time points to generate for each observation point.
+        n_lags: int
+            Number of lags for the field smoothing.
+        weight: list
+            Weights for the smoothing function.
+        dim: int
+            Number of dimensions of the field.
+        var: float
+            Variance of the Gaussian distribution.
+        len_scale: float
+            Length scale of the Gaussian distribution.
+        """
         self.seed = seed
         self.n_obs = n_obs
         self.x_lim = x_lim
@@ -116,6 +139,16 @@ class GenerateAnomaly:
     """
 
     def __init__(self, X, var_scale=10, drift_delta=0.85):
+        """
+        Parameters:
+        ----------
+        X : pandas.DataFrame
+            A pandas DataFrame containing the time series data.
+        var_scale : float, optional
+            The variance scale used for generating anomalies.
+        drift_delta : float, optional
+            The drift delta used for generating anomalies.
+        """
         self.X = X
         self.var_scale = var_scale
         self.drift_delta = drift_delta
@@ -132,7 +165,7 @@ class GenerateAnomaly:
             self.drift_delta, (size + 1) * self.drift_delta, self.drift_delta
         )
 
-    def generate_anomaly(self, anomaly_func, lam=3, prop_anom=0.07, seed=45):
+    def generate(self, anomaly_func, lam=3, prop_anom=0.07, seed=45):
         num_anom = num_anom_start_idx(self.X, prop_anom, lam)
         anom_cols, anom_idxs, anom_lens = sample_anom_len(self.X, seed, num_anom, lam)
 
