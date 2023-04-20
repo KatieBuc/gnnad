@@ -6,6 +6,8 @@ References
 ----------
 [1] Deng, Ailin, and Bryan Hooi. "Graph neural network-based anomaly detection in multivariate time series."
 Proceedings of the AAAI conference on artificial intelligence. Vol. 35. No. 5. 2021.
+[2] Buchhorn, Katie, et al. "Graph Neural Network-Based Anomaly Detection for River Network Systems"
+arXiv preprint arXiv:2304.09367 (2023).
 """
 
 import math
