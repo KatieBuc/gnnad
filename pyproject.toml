@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gnnad"
-version = "0.1.0"
+version = "0.1.1"
 description = "Graph Neural Network-Based Anomaly Detection (GNNAD)"
 authors = ["Katie Buchhorn"]
 maintainers = ["Katie Buchhorn"]
