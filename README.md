@@ -8,7 +8,7 @@ This package accompanies work that further develops this model[^1], and introduc
 
 ## Quick start
 
-As an example we'll explore data collected within river network system. In particular data collected on the Herbert river network, at these sensor locations:
+As an example we'll explore data collected across river network systems. In particular, data collected on the Herbert river network, at these sensor locations:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/34525024/232662278-bc6973ae-6ccf-443d-99d4-204eada127d6.JPG" width="35%" height="35%" alt="Herbert river sensor locations" title="">
@@ -70,7 +70,7 @@ cloned the repo you can install with (from the repo directory):
 poetry install
 ```
 
-[^1]: Buchhorn, Katie, et al. _"Graph Neural Network-Based Anomaly Detection for River Network Systems"_ Under review.
+[^1]: Buchhorn, Katie, et al. _"Graph Neural Network-Based Anomaly Detection for River Network Systems"_ arXiv preprint arXiv:2304.09367 (2023).
 [^2]: Deng, Ailin, and Bryan Hooi. _"Graph neural network-based anomaly detection in multivariate time series."_ Proceedings of the AAAI conference on artificial intelligence. Vol. 35. No. 5. 2021.
 
 
