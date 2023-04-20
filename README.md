@@ -75,7 +75,17 @@ poetry install
 
 
 ## Citation
-
+MLA:
 ```
-Buchhorn, Katie, et al. "Graph Neural Network-Based Anomaly Detection for River Network Systems" Under review.
+Buchhorn, Katie, et al. "Graph Neural Network-Based Anomaly Detection for River Network Systems"
+arXiv preprint arXiv:2304.09367 (2023).
+```
+BibTeX:
+```
+@article{buchhorn2023graph,
+  title={Graph Neural Network-Based Anomaly Detection for River Network Systems},
+  author={Buchhorn, Katie and Mengersen, Kerrie and Santos-Fernandez, Edgar and Salomone, Robert},
+  journal={arXiv preprint arXiv:2304.09367},
+  year={2023}
+}
 ```
