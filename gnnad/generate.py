@@ -13,6 +13,13 @@ from gstools import SRF, Gaussian
 __author__ = ["KatieBuc"]
 
 
+def pivot_dataframe(df):
+    df = df.pivot(index="t", columns="id")
+    df.columns = df.columns.get_level_values(1)
+    df.index.name = df.columns.name = ""
+    return df
+
+
 class GenerateGaussian:
     """
     Generate smoothened random Gaussian field and sample locations.
@@ -24,12 +31,16 @@ class GenerateGaussian:
         n_obs=20,
         x_lim=(0, 10),
         y_lim=(0, 10),
+        x_idxs=None,
+        y_idxs=None,
+        ids=None,
         T=400,
         n_lags=3,
         weight=[0.5, 0.25, 0.15, 0.1],
         dim=2,
         var=1,
         len_scale=2,
+        pivot_df=True,
     ):
         """
         -----------
@@ -64,6 +75,10 @@ class GenerateGaussian:
         self.dim = dim
         self.var = var
         self.len_scale = len_scale
+        self.x_idxs = x_idxs
+        self.y_idxs = y_idxs
+        self.pivot_df = pivot_df
+        self.ids = ids
 
     def weighted_average(self, field, weights, start, end):
         return [
@@ -81,7 +96,7 @@ class GenerateGaussian:
         start_idx, end_idx = self.n_lags, self.T + self.n_lags
         self.field = np.array(
             [
-                srf.structured([self.x_field, self.y_field], seed=i)
+                srf.structured([self.x_field, self.y_field], seed=i + self.seed)
                 for i in range(end_idx)
             ]
         )
@@ -90,35 +105,34 @@ class GenerateGaussian:
         )
 
     def sample_locations(self):
-        random.seed(self.seed)
-        self.x_idxs = random.choices(
-            range(len(self.x_field)), k=self.n_obs
-        )  # with replacement
-        self.y_idxs = random.sample(
-            range(len(self.y_field)), k=self.n_obs
-        )  # without replacement
+        if self.x_idxs is None or self.y_idxs is None:
+            print("generating random locations")
+            random.seed(self.seed)
+            self.x_idxs = random.choices(
+                range(len(self.x_field)), k=self.n_obs
+            )  # with replacement
+            self.y_idxs = random.sample(
+                range(len(self.y_field)), k=self.n_obs
+            )  # without replacement
+            # create unique ids
+            self.ids = list(range(self.n_obs))
 
     def get_dataframe(self):
         return pd.DataFrame(
             [
                 [t, i, self.smooth_field[t][x_idx][y_idx]]
-                for i, (x_idx, y_idx) in enumerate(zip(self.x_idxs, self.y_idxs))
+                for (i, x_idx, y_idx) in zip(self.ids, self.x_idxs, self.y_idxs)
                 for t in range(self.T)
             ],
             columns=["t", "id", "X"],
         )
 
-    def pivot_dataframe(self, df):
-        df = df.pivot(index="t", columns="id")
-        df.columns = df.columns.get_level_values(1)
-        df.index.name = df.columns.name = ""
-        return df
-
     def generate(self):
         self.generate_field()
         self.sample_locations()
         df = self.get_dataframe()
-        df = self.pivot_dataframe(df)
+        if self.pivot_df:
+            df = pivot_dataframe(df)
         return df
 
     def field_plot(self, n_times=3, figsize=(10, 7)):
@@ -163,7 +177,9 @@ class GenerateAnomaly:
     def drift(self, size):
         return np.arange(
             self.drift_delta, (size + 1) * self.drift_delta, self.drift_delta
-        )
+        )[
+            :size
+        ]  # sometimes float multiplication bumps above the [start, end) threshold
 
     def generate(self, anomaly_func, lam=3, prop_anom=0.07, seed=45):
         num_anom = num_anom_start_idx(self.X, prop_anom, lam)
