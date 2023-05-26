@@ -29,6 +29,7 @@ MANIFEST
 R/
 example_euclidean.ipynb
 *.pdf
+.Rhistory
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
